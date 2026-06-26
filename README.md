@@ -10,12 +10,19 @@ Einzelnen (Mikro → Makro) — die anschauliche Ergänzung zum
 
 ## Didaktische Stellschrauben
 - **Erreger:** Übertragungsrate β, Latenzzeit (1/σ), infektiöse Periode (1/γ)
-- **Interventionen:** Impfung/Anfangsimmunität, Kontaktreduktion (Social Distancing), Quarantäne/Isolation
+- **Bevölkerungsstruktur:** Aktivitätsgruppen — *Essential Worker* (viele Kontakte) vs. *Homeoffice*
+  (wenige Kontakte) mit regelbar reduziertem Transmissionsrisiko
+- **Interventionen:** Impfung/Anfangsimmunität, Quarantäne/Isolation
+- **Optionales Modul „Hospitalisierung & adaptives Verhalten":** ein Teil der Fälle wird hospitalisiert
+  (Zustand H, isoliert) mit **Kapazitätslinie**; zusätzlich eine **freiwillige Kontaktreduktion**, die
+  mit dem aktuell hospitalisierten Bevölkerungsanteil hochfährt (Rückkopplung → mehrere Wellen)
+- **Zwei Diagramm-Ansichten:** *Zusammensetzung* (gestapelt) und *Aktiv/Prävalenz* (nicht gestapelt) —
+  Letztere macht den „flatten-the-curve"-Effekt und die Kapazitätsüberlastung deutlich sichtbar
 - **Gemessenes Rₜ:** die mittlere Zahl der Folgeinfektionen je kürzlich genesener Person — R₀/Rₜ ist
   hier *emergent*, keine Stellgröße.
 
-Kontaktreduktion und Quarantäne lassen sich auch **mitten in der Welle** aktivieren, um den Effekt
-einer Intervention zum laufenden Geschehen zu zeigen.
+Alle Regler außer Bevölkerung und Impfquote wirken auch **mitten in der Welle**, um den Effekt einer
+Intervention zum laufenden Geschehen zu zeigen.
 
 ## Technik
 Eine einzelne, eigenständige `index.html` — kein Build, kein Server, **keine externen JS-Abhängigkeiten**
@@ -24,7 +31,9 @@ in festen logischen Koordinaten, damit die Dynamik unabhängig von der Bildschir
 Desktop und Handy (responsiv) und sammelt keine Daten.
 
 Die Modell-Engine ist gegen Szenario-Tests verifiziert (Epidemie bei Default, Herdenimmunität bei hoher
-Impfquote, Kurvenabflachung bei Kontaktreduktion, Reduktion durch Quarantäne; Erhaltung S+E+I+R = N).
+Impfquote, Kurvenabflachung bei Homeoffice-Anteil/reduziertem Risiko, frühere Welle bei Essential Workern,
+Reduktion durch Quarantäne, Hospitalisierung samt Kapazitätsüberlastung, abgeflachter/gestreckter Verlauf
+durch adaptives Verhalten; Erhaltung S+E+I+R+H = N).
 
 ## Aktualisieren
 `index.html` ändern, dann `git add` / `commit` / `push`. GitHub Pages baut automatisch neu.

@@ -10,7 +10,7 @@
 <style>
   :root{
     --ink:#16202E; --muted:#5C6675; --line:#E4E7ED; --paper:#F4F6F8; --panel:#FFFFFF;
-    --s:#2F6FB0; --e:#E8881C; --i:#C62828; --r:#16876A;
+    --s:#2F6FB0; --e:#E8881C; --i:#C62828; --r:#16876A; --h:#6A4FB6;
     --accent:#243049; --ok:#16876A; --warn:#C13A18;
     --radius:12px;
   }
@@ -34,8 +34,8 @@
     letter-spacing:.02em; margin:0 0 16px; color:var(--ink);}
   .group{margin:0 0 18px; padding:0 0 16px; border-bottom:1px solid var(--line);}
   .group:last-of-type{border-bottom:none; padding-bottom:0;}
-  .group > .glabel{font-family:"Space Grotesk",sans-serif; font-size:11px; letter-spacing:.12em;
-    text-transform:uppercase; color:var(--muted); margin:0 0 12px;}
+  .glabel{font-family:"Space Grotesk",sans-serif; font-size:11px; letter-spacing:.12em;
+    text-transform:uppercase; color:var(--muted); margin:0 0 12px; display:flex; justify-content:space-between; align-items:center;}
 
   .ctrl{margin-bottom:14px;}
   .ctrl:last-child{margin-bottom:0;}
@@ -52,6 +52,18 @@
     background:var(--accent); border:2px solid #fff;}
   input[type=range]:focus-visible{box-shadow:0 0 0 3px rgba(36,48,73,.25);}
   input[type=range]:disabled{cursor:not-allowed;}
+
+  .switch{position:relative; display:inline-block; width:40px; height:22px; cursor:pointer; flex:none;}
+  .switch input{opacity:0; width:0; height:0; position:absolute;}
+  .switch .track{position:absolute; inset:0; background:var(--line); border-radius:999px; transition:background .15s;}
+  .switch .track::before{content:""; position:absolute; width:16px; height:16px; left:3px; top:3px;
+    background:#fff; border-radius:50%; transition:transform .15s; box-shadow:0 1px 2px rgba(0,0,0,.2);}
+  .switch input:checked + .track{background:var(--accent);}
+  .switch input:checked + .track::before{transform:translateX(18px);}
+  .switch input:focus-visible + .track{box-shadow:0 0 0 3px rgba(36,48,73,.25);}
+
+  .chk{display:flex; align-items:center; gap:8px; font-size:13px; color:var(--muted); cursor:pointer; user-select:none;}
+  .chk input{width:15px; height:15px; accent-color:var(--accent); cursor:pointer;}
 
   .btns{display:flex; gap:10px; margin-top:4px;}
   .btns button{flex:1; font:inherit; font-size:14px; font-weight:500; padding:10px 8px;
@@ -72,34 +84,39 @@
   .hint{font-size:12.5px; color:var(--muted); margin:16px 0 0; padding-top:14px; border-top:1px solid var(--line);}
 
   .arena-card{padding:18px;}
-  .legend{display:flex; flex-wrap:wrap; gap:16px; margin-bottom:12px; font-size:13px; color:var(--muted);}
+  .legend{display:flex; flex-wrap:wrap; gap:14px; margin-bottom:12px; font-size:13px; color:var(--muted); align-items:center;}
   .legend span{display:flex; align-items:center; gap:7px;}
+  .legend .spacer{flex:1;}
   .dot{width:12px; height:12px; border-radius:50%; flex:none;}
-  .dot.s{background:var(--s);} .dot.e{background:var(--e);} .dot.i{background:var(--i);} .dot.r{background:var(--r);}
-  .dot.q{background:#fff; border:2px solid var(--ink); width:12px; height:12px;}
+  .dot.s{background:var(--s);} .dot.e{background:var(--e);} .dot.i{background:var(--i);} .dot.r{background:var(--r);} .dot.hosp{background:var(--h);}
+  .dot.q{background:var(--i); border:2px solid #fff; box-shadow:0 0 0 1px var(--ink);}
   .arena-wrap{position:relative; width:100%; aspect-ratio:900/560; background:#0E1622; border-radius:10px; overflow:hidden;}
   #arena{position:absolute; inset:0; width:100%; height:100%; display:block;}
   .over-badge{position:absolute; top:10px; left:10px; background:rgba(14,22,34,.82); color:#fff;
     font-size:12.5px; padding:5px 10px; border-radius:7px; display:none;}
   .over-badge.show{display:block;}
 
-  .metrics{display:grid; grid-template-columns:repeat(4,1fr); gap:10px; margin-top:14px;}
+  .metrics{display:grid; grid-template-columns:repeat(auto-fit,minmax(120px,1fr)); gap:10px; margin-top:14px;}
   .metric{border:1px solid var(--line); border-radius:9px; padding:10px 12px;}
   .metric .k{font-size:11px; letter-spacing:.06em; text-transform:uppercase; color:var(--muted); margin:0;}
   .metric .v{font-family:"IBM Plex Mono",monospace; font-weight:500; font-size:20px; margin:3px 0 0;}
   .metric .v small{font-size:12px; color:var(--muted);}
   .metric.rt{border-color:var(--accent);}
+  .metric.hosp{border-color:var(--h);}
 
   .chartcard{margin-top:20px;}
+  .chart-head{display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:10px; margin-bottom:12px;}
+  .chart-head .clegend{display:flex; flex-wrap:wrap; gap:13px; font-size:12.5px; color:var(--muted);}
+  .chart-head .clegend span{display:flex; align-items:center; gap:6px;}
+  .swatch{width:16px; height:0; border-top-width:2px; border-top-style:solid; flex:none;}
   .chart-wrap{position:relative; width:100%; height:300px;}
   #chart{position:absolute; inset:0; width:100%; height:100%;}
-  .foot{margin-top:22px; font-size:12.5px; color:var(--muted); max-width:90ch;}
+  .foot{margin-top:22px; font-size:12.5px; color:var(--muted); max-width:95ch;}
   .foot strong{font-weight:500; color:var(--ink);}
 
   @media (max-width:880px){
     .band{grid-template-columns:1fr;}
     h1{font-size:25px;}
-    .metrics{grid-template-columns:repeat(2,1fr);}
   }
 </style>
 </head>
@@ -107,7 +124,7 @@
 <div class="wrap">
   <p class="eyebrow">Interaktives Seminarwerkzeug · Infektionsepidemiologie</p>
   <h1>Agentenbasiertes Infektionsmodell (SEIR)</h1>
-  <p class="sub">Jeder Punkt ist eine Person. Bei Kontakt überträgt sich der Erreger mit einer Wahrscheinlichkeit; Angesteckte durchlaufen <strong>S → E → I → R</strong>. Beobachte, wie aus dem Verhalten der Einzelnen die Epidemiekurve rechts entsteht — und wie Kontaktreduktion, Impfung und Quarantäne sie verändern. Schwestermodell zum <a href="https://clinical-pharmacy-saarland-university.github.io/seir-simulator/">SEIR-Kompartimentmodell</a>.</p>
+  <p class="sub">Jeder Punkt ist eine Person. Bei Kontakt überträgt sich der Erreger mit einer Wahrscheinlichkeit; Angesteckte durchlaufen <strong>S → E → I → R</strong>. Die Bevölkerung lässt sich in Gruppen mit unterschiedlich vielen Kontakten unterteilen (Essential Worker vs. Homeoffice); optional kommen Hospitalisierung und adaptives Verhalten hinzu. Schwestermodell zum <a href="https://clinical-pharmacy-saarland-university.github.io/seir-simulator/">SEIR-Kompartimentmodell</a>.</p>
 
   <div class="band">
     <div class="card" id="controls">
@@ -146,14 +163,26 @@
       </div>
 
       <div class="group">
+        <p class="glabel">Bevölkerungsstruktur</p>
+        <div class="ctrl">
+          <div class="top"><label for="essFrac">Essential Worker (viele Kontakte) %</label><span class="val" id="essFrac-out">0</span></div>
+          <input type="range" id="essFrac" min="0" max="50" step="1" value="0">
+        </div>
+        <div class="ctrl">
+          <div class="top"><label for="homeFrac">Homeoffice (wenige Kontakte) %</label><span class="val" id="homeFrac-out">0</span></div>
+          <input type="range" id="homeFrac" min="0" max="95" step="1" value="0">
+        </div>
+        <div class="ctrl">
+          <div class="top"><label for="homeRisk">… Transmissionsrisiko Homeoffice %</label><span class="val" id="homeRisk-out">30</span></div>
+          <input type="range" id="homeRisk" min="0" max="100" step="5" value="30">
+        </div>
+      </div>
+
+      <div class="group">
         <p class="glabel">Interventionen</p>
         <div class="ctrl">
           <div class="top"><label for="vac">Impfung / Immunität zu Beginn (%)</label><span class="val" id="vac-out">0</span></div>
           <input type="range" id="vac" min="0" max="90" step="1" value="0">
-        </div>
-        <div class="ctrl">
-          <div class="top"><label for="dist">Kontaktreduktion (% bleiben zuhause)</label><span class="val" id="dist-out">0</span></div>
-          <input type="range" id="dist" min="0" max="95" step="1" value="0">
         </div>
         <div class="ctrl">
           <div class="top"><label for="qfrac">Quarantäne: Anteil isolierter Fälle (%)</label><span class="val" id="qfrac-out">0</span></div>
@@ -162,6 +191,29 @@
         <div class="ctrl disabled" id="ctrl-qdelay">
           <div class="top"><label for="qdelay">… Verzögerung bis Isolation (Tage)</label><span class="val" id="qdelay-out">2</span></div>
           <input type="range" id="qdelay" min="0" max="8" step="1" value="2">
+        </div>
+      </div>
+
+      <div class="group">
+        <p class="glabel"><span>Hospitalisierung &amp; adaptives Verhalten</span>
+          <label class="switch" title="Modul ein/aus"><input type="checkbox" id="module"><span class="track"></span></label></p>
+        <div id="mod-group" class="disabled">
+          <div class="ctrl">
+            <div class="top"><label for="hospFrac">Hospitalisierte (% der Fälle)</label><span class="val" id="hospFrac-out">8</span></div>
+            <input type="range" id="hospFrac" min="0" max="40" step="1" value="8" disabled>
+          </div>
+          <div class="ctrl">
+            <div class="top"><label for="hospStay">Verweildauer Klinik (Tage)</label><span class="val" id="hospStay-out">7</span></div>
+            <input type="range" id="hospStay" min="1" max="30" step="1" value="7" disabled>
+          </div>
+          <div class="ctrl">
+            <div class="top"><label for="hospCap">Klinik-Kapazität (% der Bevölkerung)</label><span class="val" id="hospCap-out">2</span></div>
+            <input type="range" id="hospCap" min="0.5" max="10" step="0.5" value="2" disabled>
+          </div>
+          <div class="ctrl">
+            <div class="top"><label for="reactSens">Freiwillige Kontaktreduktion (Reaktionsstärke)</label><span class="val" id="reactSens-out">50</span></div>
+            <input type="range" id="reactSens" min="0" max="100" step="5" value="50" disabled>
+          </div>
         </div>
       </div>
 
@@ -178,17 +230,20 @@
         </div>
       </div>
 
-      <p class="hint">R₀ ist hier keine Stellgröße, sondern entsteht aus β, Infektionsradius, Bewegungstempo und Dichte — und wird live gemessen (Rₜ rechts). Bevölkerung und Impfquote setzen den Lauf zurück; Kontaktreduktion und Quarantäne wirken auch <em>mitten</em> in der Welle.</p>
+      <p class="hint">R₀ ist hier keine Stellgröße, sondern entsteht aus β, Radius, Tempo, Dichte und Kontaktstruktur — und wird live gemessen (Rₜ rechts). Bevölkerung und Impfquote setzen den Lauf zurück; alle übrigen Regler wirken auch <em>mitten</em> in der Welle.</p>
     </div>
 
     <div>
       <div class="card arena-card">
         <div class="legend">
           <span><span class="dot s"></span>Susceptible</span>
-          <span><span class="dot e"></span>Exposed (latent)</span>
+          <span><span class="dot e"></span>Exposed</span>
           <span><span class="dot i"></span>Infectious</span>
-          <span><span class="dot r"></span>Recovered / immun</span>
+          <span><span class="dot r"></span>Recovered</span>
           <span><span class="dot q"></span>isoliert</span>
+          <span><span class="dot hosp"></span>hospitalisiert</span>
+          <span class="spacer"></span>
+          <label class="chk"><input type="checkbox" id="showGroups">Gruppen markieren</label>
         </div>
         <div class="arena-wrap">
           <canvas id="arena" role="img" aria-label="Simulationsfeld mit Agenten, farbcodiert nach Infektionszustand."></canvas>
@@ -197,20 +252,35 @@
         <div class="metrics">
           <div class="metric"><p class="k">Tag</p><p class="v" id="m-day">0</p></div>
           <div class="metric"><p class="k">Aktuell infektiös</p><p class="v" id="m-inf">–</p></div>
+          <div class="metric hosp"><p class="k">Hospitalisiert</p><p class="v" id="m-hosp">–</p></div>
           <div class="metric"><p class="k">Je infiziert</p><p class="v" id="m-attack">–</p></div>
           <div class="metric rt"><p class="k">Rₜ (gemessen)</p><p class="v" id="m-rt">–</p></div>
         </div>
       </div>
 
       <div class="card chartcard">
+        <div class="chart-head">
+          <div class="seg" id="seg-chart" role="group" aria-label="Diagrammtyp">
+            <button data-mode="stack" class="active" type="button">Zusammensetzung</button>
+            <button data-mode="prev" type="button">Aktiv / Prävalenz</button>
+          </div>
+          <div class="clegend">
+            <span><span class="swatch" style="border-top-color:var(--s);"></span>S</span>
+            <span><span class="swatch" style="border-top-color:var(--e);"></span>E</span>
+            <span><span class="swatch" style="border-top-color:var(--i);"></span>I</span>
+            <span><span class="swatch" style="border-top-color:var(--h);"></span>H</span>
+            <span><span class="swatch" style="border-top-color:var(--r);"></span>R</span>
+            <span id="cap-leg" style="display:none;"><span class="swatch" style="border-top-color:var(--h); border-top-style:dashed;"></span>Kapazität</span>
+          </div>
+        </div>
         <div class="chart-wrap">
-          <canvas id="chart" role="img" aria-label="Epidemiekurve: Anteil der Bevölkerung in den Zuständen S, E, I, R über die Zeit."></canvas>
+          <canvas id="chart" role="img" aria-label="Epidemiekurve über die Zeit."></canvas>
         </div>
       </div>
     </div>
   </div>
 
-  <p class="foot"><strong>Modell:</strong> Agenten bewegen sich zufällig in einem festen Feld; bei Abstand &lt; Infektionsradius wird ein Susceptibler mit Rate β/Tag angesteckt. Latenz (E→I) und Genesung (I→R) sind exponentiell verteilt mit Mittelwert 1/σ bzw. 1/γ (wie im SEIR-Modell). Geimpfte/Immune starten in R, „Kontaktreduzierte“ bewegen sich nicht, isolierte Fälle stecken niemanden mehr an. Rₜ wird direkt im Modell gemessen (mittlere Zahl der Folgeinfektionen je kürzlich genesener Person). Stochastisches Modell — jeder Neustart verläuft etwas anders.</p>
+  <p class="foot"><strong>Modell:</strong> Agenten bewegen sich zufällig; bei Abstand &lt; Infektionsradius wird ein Susceptibler mit Rate β/Tag angesteckt. Latenz (E→I) und Genesung (I→R) sind exponentiell verteilt (Mittel 1/σ bzw. 1/γ). <strong>Gruppen:</strong> Essential Worker bewegen sich schneller (mehr Kontakte), Homeoffice langsamer und mit reduziertem Transmissionsrisiko. <strong>Modul:</strong> ein Teil der Fälle wird nach der infektiösen Phase hospitalisiert (Zustand H, isoliert) und genest nach der Verweildauer; die Kapazitätslinie zeigt eine mögliche Überlastung. Bei „freiwilliger Kontaktreduktion“ drosseln <em>alle</em> Agenten ihre Bewegung umso stärker, je höher der aktuell hospitalisierte Bevölkerungsanteil ist — diese Rückkopplung kann mehrere Wellen erzeugen. Rₜ wird direkt gemessen. Stochastisches Modell — jeder Neustart verläuft etwas anders.</p>
 </div>
 
 <script id="abm-core">
@@ -218,13 +288,14 @@
 (function(G){
   'use strict';
 
-  // Fixed logical world so dynamics are independent of screen size.
   var WORLD_W = 900, WORLD_H = 560;
-  var FRAMES_PER_DAY = 20;           // dt = 1/20 day per simulation step
+  var FRAMES_PER_DAY = 20;
   var DT = 1 / FRAMES_PER_DAY;
-  var MOVE = 3.4;                    // logical px per step at speed 1
+  var MOVE = 3.4;
   var SEED_INFECTIONS = 4;
-  var FLASH_TTL = 0.6;              // days a new-infection ring is shown
+  var FLASH_TTL = 0.6;
+  var ESS_SPEED = 1.8, HOME_SPEED = 0.28;   // group movement multipliers
+  var ADAPT_GAIN = 50;                       // voluntary-reduction sensitivity scale
 
   function mulberry32(a){
     return function(){
@@ -234,50 +305,51 @@
       return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
     };
   }
+  function clamp(v, lo, hi){ return v < lo ? lo : (v > hi ? hi : v); }
+
+  // Activity group from a stable per-agent rank: 0=essential, 1=normal, 2=homeoffice.
+  function groupOf(a, p){
+    if(a.actRank < p.essFrac / 100) return 0;
+    if(a.actRank >= 1 - p.homeFrac / 100) return 2;
+    return 1;
+  }
+  function speedMul(g){ return g === 0 ? ESS_SPEED : (g === 2 ? HOME_SPEED : 1); }
+  function riskMul(g, p){ return g === 2 ? p.homeRisk / 100 : 1; }
 
   function createSim(p){
     var rng = mulberry32((p.seed >>> 0) || 1);
-    var N = p.N;
-    var agents = new Array(N);
-    var margin = 6;
-    var i, a;
+    var N = p.N, agents = new Array(N), margin = 6, i, a;
     for(i = 0; i < N; i++){
-      a = {
+      agents[i] = {
         x: margin + rng() * (WORLD_W - 2*margin),
         y: margin + rng() * (WORLD_H - 2*margin),
         ang: rng() * Math.PI * 2,
-        state: 'S',
-        sec: 0,            // secondary infections caused
-        distRank: rng(),   // stationary iff distRank < dist fraction (stable under slider changes)
+        state: 'S', sec: 0, actRank: rng(),
         qWill: false, q: false, qClock: 0,
-        infDay: -1
+        willHosp: false, hClock: 0, infDay: -1
       };
-      agents[i] = a;
     }
-    // Vaccinated / initially immune: a random subset starts in R.
-    var nImm = Math.round(N * (p.vac || 0) / 100);
-    var order = [];
+    var nImm = Math.round(N * (p.vac || 0) / 100), order = [], j, tmp;
     for(i = 0; i < N; i++) order.push(i);
-    for(i = N - 1; i > 0; i--){ var j = Math.floor(rng() * (i + 1)); var tmp = order[i]; order[i] = order[j]; order[j] = tmp; }
+    for(i = N - 1; i > 0; i--){ j = Math.floor(rng() * (i + 1)); tmp = order[i]; order[i] = order[j]; order[j] = tmp; }
     for(i = 0; i < nImm; i++) agents[order[i]].state = 'R';
-    // Seed infections among the remaining susceptibles.
     var seeded = 0, cum = 0;
     for(i = nImm; i < N && seeded < SEED_INFECTIONS; i++){
       var ag = agents[order[i]];
-      if(ag.state === 'S'){ ag.state = 'I'; ag.infDay = 0; ag.qWill = rng() < (p.qfrac||0)/100; seeded++; cum++; }
+      if(ag.state === 'S'){ ag.state = 'I'; ag.infDay = 0; ag.willHosp = !!p.module && rng() < (p.hospFrac||0)/100; ag.qWill = rng() < (p.qfrac||0)/100; seeded++; cum++; }
     }
     var sim = {
       agents: agents, W: WORLD_W, H: WORLD_H, params: p, rng: rng,
-      day: 0, lastRec: -1, peakI: 0, peakDay: 0, cum: cum, baseS: N - nImm,
-      recentR: [], flashes: [], over: false,
-      series: { t: [], S: [], E: [], I: [], R: [] }
+      day: 0, lastRec: -1, peakI: 0, peakDay: 0, peakH: 0, capExceeded: false,
+      cum: cum, adapt: 0, recentR: [], flashes: [], over: false,
+      series: { t: [], S: [], E: [], I: [], R: [], H: [] }
     };
     record(sim);
     return sim;
   }
 
   function counts(sim){
-    var c = { S:0, E:0, I:0, R:0 }, ag = sim.agents, i;
+    var c = { S:0, E:0, I:0, R:0, H:0 }, ag = sim.agents, i;
     for(i = 0; i < ag.length; i++) c[ag[i].state]++;
     return c;
   }
@@ -285,68 +357,55 @@
   function record(sim){
     var c = counts(sim), N = sim.agents.length, s = sim.series;
     s.t.push(sim.day);
-    s.S.push(100*c.S/N); s.E.push(100*c.E/N); s.I.push(100*c.I/N); s.R.push(100*c.R/N);
+    s.S.push(100*c.S/N); s.E.push(100*c.E/N); s.I.push(100*c.I/N); s.R.push(100*c.R/N); s.H.push(100*c.H/N);
   }
 
   function rtMeasured(sim){
-    var p = sim.params, Wd = Math.max(6, 2 * p.inf), arr = sim.recentR;
-    var sum = 0, n = 0, i;
-    for(i = 0; i < arr.length; i++){
-      if(sim.day - arr[i].day <= Wd){ sum += arr[i].sec; n++; }
-    }
+    var p = sim.params, Wd = Math.max(6, 2 * p.inf), arr = sim.recentR, sum = 0, n = 0, i;
+    for(i = 0; i < arr.length; i++){ if(sim.day - arr[i].day <= Wd){ sum += arr[i].sec; n++; } }
     return n > 0 ? sum / n : null;
   }
 
-  // One simulation step (DT days). Mutates sim in place.
   function stepSim(sim){
     var p = sim.params, ag = sim.agents, N = ag.length, rng = sim.rng, i, a;
-    var distFrac = (p.dist || 0) / 100;
-    var move = p.speed * MOVE;
+    var c0 = counts(sim);
+    // adaptive voluntary contact reduction driven by hospitalized fraction
+    var reduction = p.module ? clamp((p.reactSens / 100) * (c0.H / N) * ADAPT_GAIN, 0, 0.9) : 0;
+    sim.adapt = reduction;
+    var adaptF = 1 - reduction;
+
     // --- movement ---
     for(i = 0; i < N; i++){
       a = ag[i];
-      var stationary = (a.distRank < distFrac) || a.q;
-      if(stationary) continue;
-      a.ang += (rng() - 0.5) * 0.4;            // gentle random walk
-      a.x += Math.cos(a.ang) * move;
-      a.y += Math.sin(a.ang) * move;
-      if(a.x < 4){ a.x = 4; a.ang = Math.PI - a.ang; }
-      else if(a.x > sim.W - 4){ a.x = sim.W - 4; a.ang = Math.PI - a.ang; }
-      if(a.y < 4){ a.y = 4; a.ang = -a.ang; }
-      else if(a.y > sim.H - 4){ a.y = sim.H - 4; a.ang = -a.ang; }
+      if(a.state === 'H' || a.q) continue;
+      var g = groupOf(a, p);
+      var move = p.speed * MOVE * speedMul(g) * adaptF;
+      a.ang += (rng() - 0.5) * 0.4;
+      a.x += Math.cos(a.ang) * move; a.y += Math.sin(a.ang) * move;
+      if(a.x < 4){ a.x = 4; a.ang = Math.PI - a.ang; } else if(a.x > sim.W - 4){ a.x = sim.W - 4; a.ang = Math.PI - a.ang; }
+      if(a.y < 4){ a.y = 4; a.ang = -a.ang; } else if(a.y > sim.H - 4){ a.y = sim.H - 4; a.ang = -a.ang; }
     }
     // --- spatial grid ---
-    var cell = Math.max(p.radius, 10);
-    var cols = Math.ceil(sim.W / cell);
-    var grid = {};
-    for(i = 0; i < N; i++){
-      a = ag[i]; a._inf = false;
-      var key = (Math.floor(a.x / cell)) + ',' + (Math.floor(a.y / cell));
-      (grid[key] || (grid[key] = [])).push(i);
-    }
+    var cell = Math.max(p.radius, 10), grid = {}, key;
+    for(i = 0; i < N; i++){ a = ag[i]; a._inf = false; key = Math.floor(a.x/cell) + ',' + Math.floor(a.y/cell); (grid[key] || (grid[key] = [])).push(i); }
     // --- infection ---
-    var r2 = p.radius * p.radius;
-    var pInf = 1 - Math.exp(-DT * p.beta);
+    var r2 = p.radius * p.radius, pInf = 1 - Math.exp(-DT * p.beta);
     for(i = 0; i < N; i++){
       a = ag[i];
       if(a.state !== 'I' || a.q) continue;
-      var cx = Math.floor(a.x / cell), cy = Math.floor(a.y / cell), gx, gy, k;
-      for(gx = cx - 1; gx <= cx + 1; gx++){
-        for(gy = cy - 1; gy <= cy + 1; gy++){
-          var bucket = grid[gx + ',' + gy];
-          if(!bucket) continue;
-          for(k = 0; k < bucket.length; k++){
-            var b = ag[bucket[k]];
-            if(b.state !== 'S' || b._inf) continue;
-            var dx = a.x - b.x, dy = a.y - b.y;
-            if(dx*dx + dy*dy > r2) continue;
-            if(rng() < pInf){
-              b._inf = true; a.sec++; sim.cum++;
-              b.infDay = sim.day;
-              if(p.lat > 0){ b.state = 'E'; }
-              else { b.state = 'I'; b.qWill = rng() < (p.qfrac||0)/100; b.qClock = 0; }
-              sim.flashes.push({ x: b.x, y: b.y, t: 0 });
-            }
+      var rmA = riskMul(groupOf(a, p), p);
+      var cx = Math.floor(a.x/cell), cy = Math.floor(a.y/cell), gx, gy, k;
+      for(gx = cx-1; gx <= cx+1; gx++) for(gy = cy-1; gy <= cy+1; gy++){
+        var bucket = grid[gx + ',' + gy]; if(!bucket) continue;
+        for(k = 0; k < bucket.length; k++){
+          var b = ag[bucket[k]];
+          if(b.state !== 'S' || b._inf) continue;
+          var dx = a.x - b.x, dy = a.y - b.y; if(dx*dx + dy*dy > r2) continue;
+          if(rng() < pInf * rmA * riskMul(groupOf(b, p), p)){
+            b._inf = true; a.sec++; sim.cum++; b.infDay = sim.day;
+            if(p.lat > 0){ b.state = 'E'; }
+            else { b.state = 'I'; b.willHosp = !!p.module && rng() < (p.hospFrac||0)/100; b.qWill = rng() < (p.qfrac||0)/100; b.qClock = 0; b.hClock = 0; }
+            sim.flashes.push({ x: b.x, y: b.y, t: 0 });
           }
         }
       }
@@ -354,31 +413,42 @@
     // --- transitions ---
     var pSig = p.lat > 0 ? (1 - Math.exp(-DT / p.lat)) : 1;
     var pGam = 1 - Math.exp(-DT / p.inf);
+    // severe cases are admitted partway through their illness (then isolated)
+    var hospDelayDays = Math.max(2, Math.min(6, p.inf * 0.5));
+    var pAdmit = 1 - Math.exp(-DT / hospDelayDays);
     for(i = 0; i < N; i++){
       a = ag[i];
       if(a.state === 'E'){
-        if(rng() < pSig){ a.state = 'I'; a.qWill = rng() < (p.qfrac||0)/100; a.qClock = 0; }
+        if(rng() < pSig){ a.state = 'I'; a.willHosp = !!p.module && rng() < (p.hospFrac||0)/100; a.qWill = rng() < (p.qfrac||0)/100; a.qClock = 0; a.hClock = 0; }
       } else if(a.state === 'I'){
         if(a.qWill && !a.q){ a.qClock += DT; if(a.qClock >= p.qdelay) a.q = true; }
-        if(rng() < pGam){ a.state = 'R'; a.q = false; sim.recentR.push({ day: sim.day, sec: a.sec }); }
+        if(a.willHosp){
+          if(rng() < pAdmit){ sim.recentR.push({ day: sim.day, sec: a.sec }); a.state = 'H'; a.q = false; a.hClock = 0; }
+        } else if(rng() < pGam){
+          sim.recentR.push({ day: sim.day, sec: a.sec }); a.state = 'R'; a.q = false;
+        }
+      } else if(a.state === 'H'){
+        a.hClock += DT;
+        if(a.hClock >= p.hospStay) a.state = 'R';
       }
     }
     // --- bookkeeping ---
     sim.day += DT;
     var c = counts(sim);
     if(c.I > sim.peakI){ sim.peakI = c.I; sim.peakDay = sim.day; }
+    if(c.H > sim.peakH) sim.peakH = c.H;
+    if(p.module && c.H / N > p.hospCap / 100) sim.capExceeded = true;
     var f;
     for(i = sim.flashes.length - 1; i >= 0; i--){ f = sim.flashes[i]; f.t += DT; if(f.t > FLASH_TTL) sim.flashes.splice(i, 1); }
     while(sim.recentR.length && sim.day - sim.recentR[0].day > Math.max(6, 2 * p.inf) + 2) sim.recentR.shift();
     if(Math.floor(sim.day) > sim.lastRec){ sim.lastRec = Math.floor(sim.day); record(sim); }
-    if(c.E === 0 && c.I === 0) sim.over = true;
+    if(c.E === 0 && c.I === 0 && c.H === 0) sim.over = true;
     return sim;
   }
 
   G.ABMCore = {
-    createSim: createSim, stepSim: stepSim, counts: counts,
-    rtMeasured: rtMeasured, record: record,
-    WORLD_W: WORLD_W, WORLD_H: WORLD_H, FRAMES_PER_DAY: FRAMES_PER_DAY
+    createSim: createSim, stepSim: stepSim, counts: counts, rtMeasured: rtMeasured, record: record,
+    groupOf: groupOf, WORLD_W: WORLD_W, WORLD_H: WORLD_H, FRAMES_PER_DAY: FRAMES_PER_DAY
   };
 })(typeof window !== 'undefined' ? window : globalThis);
 </script>
@@ -390,42 +460,55 @@
   if(typeof document === 'undefined') return;
   var Core = (typeof window !== 'undefined' ? window : globalThis).ABMCore;
 
-  var COL = { S:'#2F6FB0', E:'#E8881C', I:'#C62828', R:'#16876A' };
+  var COL = { S:'#2F6FB0', E:'#E8881C', I:'#C62828', R:'#16876A', H:'#6A4FB6' };
   var $ = function(id){ return document.getElementById(id); };
 
-  var params = { seed: 1, N:320, speed:1.0, radius:12, beta:1.6, lat:3, inf:8, vac:0, dist:0, qfrac:0, qdelay:2 };
-  var sim = null, running = true, mult = 2, seedCounter = 1;
+  var params = {
+    seed: 1, N:320, speed:1.0, radius:12, beta:1.6, lat:3, inf:8,
+    essFrac:0, homeFrac:0, homeRisk:30,
+    vac:0, qfrac:0, qdelay:2,
+    module:0, hospFrac:8, hospStay:7, hospCap:2, reactSens:50
+  };
+  var sim = null, running = true, mult = 2, seedCounter = 1, chartMode = 'stack', showGroups = false;
 
-  var sliders = ['N','speed','radius','beta','lat','inf','vac','dist','qfrac','qdelay'];
-  var fmt = { speed:function(v){return v.toFixed(1);}, beta:function(v){return v.toFixed(1);} };
-  var structural = { N:true, vac:true };  // changing these rebuilds the run
+  var sliders = ['N','speed','radius','beta','lat','inf','essFrac','homeFrac','homeRisk','vac','qfrac','qdelay','hospFrac','hospStay','hospCap','reactSens'];
+  var fmt = { speed:function(v){return v.toFixed(1);}, beta:function(v){return v.toFixed(1);}, hospCap:function(v){return v.toFixed(1);} };
+  var structural = { N:true, vac:true };
+  var modSliders = ['hospFrac','hospStay','hospCap','reactSens'];
 
   function rebuild(){
     params.seed = (seedCounter = (seedCounter + 1) >>> 0);
     sim = Core.createSim(Object.assign({}, params));
     $('over-badge').classList.remove('show');
   }
-
   function readSlider(id){
-    var el = $(id), v = parseFloat(el.value);
+    var v = parseFloat($(id).value);
     params[id] = v;
     $(id + '-out').textContent = fmt[id] ? fmt[id](v) : v;
   }
 
   sliders.forEach(function(id){
-    var el = $(id);
     readSlider(id);
-    el.addEventListener('input', function(){
+    $(id).addEventListener('input', function(){
       readSlider(id);
       if(id === 'qfrac'){
         var on = params.qfrac > 0;
         $('ctrl-qdelay').classList.toggle('disabled', !on);
         $('qdelay').disabled = !on;
       }
-      if(structural[id]) rebuild();   // others apply live
+      if(structural[id]) rebuild();
     });
   });
   $('qdelay').disabled = true;
+
+  $('module').addEventListener('change', function(){
+    params.module = this.checked ? 1 : 0;
+    $('mod-group').classList.toggle('disabled', !this.checked);
+    modSliders.forEach(function(id){ $(id).disabled = !$('module').checked; });
+    $('cap-leg').style.display = this.checked ? '' : 'none';
+  });
+
+  $('showGroups').addEventListener('change', function(){ showGroups = this.checked; });
 
   $('btn-play').addEventListener('click', function(){
     running = !running;
@@ -439,11 +522,14 @@
     mult = parseInt(b.getAttribute('data-mult'), 10);
     Array.prototype.forEach.call(this.querySelectorAll('button'), function(x){ x.classList.toggle('active', x === b); });
   });
+  $('seg-chart').addEventListener('click', function(e){
+    var b = e.target.closest('button'); if(!b) return;
+    chartMode = b.getAttribute('data-mode');
+    Array.prototype.forEach.call(this.querySelectorAll('button'), function(x){ x.classList.toggle('active', x === b); });
+  });
 
-  // ---- canvas helpers (devicePixelRatio aware) ----
   function fitCanvas(cv){
-    var r = cv.getBoundingClientRect();
-    var dpr = Math.min(window.devicePixelRatio || 1, 2);
+    var r = cv.getBoundingClientRect(), dpr = Math.min(window.devicePixelRatio || 1, 2);
     var w = Math.max(1, Math.round(r.width * dpr)), h = Math.max(1, Math.round(r.height * dpr));
     if(cv.width !== w || cv.height !== h){ cv.width = w; cv.height = h; }
     return dpr;
@@ -452,122 +538,128 @@
   function drawArena(){
     var cv = $('arena'), ctx = cv.getContext('2d');
     fitCanvas(cv);
-    var W = cv.width, H = cv.height;
-    var sx = W / sim.W, sy = H / sim.H;
+    var W = cv.width, H = cv.height, sx = W / sim.W, sy = H / sim.H, i, f, a;
     ctx.clearRect(0, 0, W, H);
     ctx.fillStyle = '#0E1622'; ctx.fillRect(0, 0, W, H);
-    // new-infection flashes
-    var i, f, a;
     for(i = 0; i < sim.flashes.length; i++){
-      f = sim.flashes[i];
-      var prog = f.t / 0.6;
-      ctx.beginPath();
-      ctx.arc(f.x * sx, f.y * sy, (3 + prog * 16) * sx, 0, Math.PI * 2);
-      ctx.strokeStyle = 'rgba(198,40,40,' + (0.5 * (1 - prog)) + ')';
-      ctx.lineWidth = 1.5; ctx.stroke();
+      f = sim.flashes[i]; var prog = f.t / 0.6;
+      ctx.beginPath(); ctx.arc(f.x * sx, f.y * sy, (3 + prog * 16) * sx, 0, Math.PI * 2);
+      ctx.strokeStyle = 'rgba(198,40,40,' + (0.5 * (1 - prog)) + ')'; ctx.lineWidth = 1.5; ctx.stroke();
     }
-    // agents
-    var rad = Math.max(2, 3.0 * sx);
-    var ag = sim.agents;
+    var rad = Math.max(2, 3.0 * sx), ag = sim.agents;
     for(i = 0; i < ag.length; i++){
       a = ag[i];
+      var px = a.x * sx, py = a.y * sy;
+      if(showGroups){
+        var g = Core.groupOf(a, params);
+        if(g === 0){ ctx.beginPath(); ctx.arc(px, py, rad * 2.3, 0, Math.PI*2); ctx.strokeStyle = 'rgba(120,200,255,.55)'; ctx.lineWidth = 1; ctx.stroke(); }
+        else if(g === 2){ ctx.beginPath(); ctx.arc(px, py, rad * 1.7, 0, Math.PI*2); ctx.strokeStyle = 'rgba(150,160,175,.5)'; ctx.lineWidth = 1; ctx.stroke(); }
+      }
       ctx.beginPath();
-      ctx.arc(a.x * sx, a.y * sy, a.state === 'I' ? rad * 1.35 : rad, 0, Math.PI * 2);
-      ctx.fillStyle = COL[a.state];
-      ctx.fill();
+      ctx.arc(px, py, (a.state === 'I' || a.state === 'H') ? rad * 1.35 : rad, 0, Math.PI * 2);
+      ctx.fillStyle = COL[a.state]; ctx.fill();
       if(a.q){ ctx.lineWidth = 1.5 * sx; ctx.strokeStyle = '#fff'; ctx.stroke(); }
     }
   }
 
-  function niceMax(v){ // round day axis up to a friendly value
+  function niceMax(v){
     if(v <= 10) return 10;
-    var pow = Math.pow(10, Math.floor(Math.log10(v)));
-    var n = v / pow;
+    var pow = Math.pow(10, Math.floor(Math.log10(v))), n = v / pow;
     var step = n <= 1 ? 1 : n <= 2 ? 2 : n <= 5 ? 5 : 10;
     return step * pow;
   }
 
-  function drawChart(){
-    var cv = $('chart'), ctx = cv.getContext('2d');
-    var dpr = fitCanvas(cv);
-    var W = cv.width, H = cv.height;
-    ctx.clearRect(0, 0, W, H);
+  function chartFrame(ctx, W, H, dpr){
     var padL = 42 * dpr, padR = 12 * dpr, padT = 12 * dpr, padB = 28 * dpr;
     var plotW = W - padL - padR, plotH = H - padT - padB;
-    var s = sim.series, n = s.t.length;
     var maxT = niceMax(Math.max(10, sim.day));
+    ctx.font = (11 * dpr) + 'px "IBM Plex Mono", monospace';
+    ctx.fillStyle = '#9AA3AF'; ctx.strokeStyle = '#E4E7ED'; ctx.lineWidth = 1; ctx.textBaseline = 'middle';
     var X = function(t){ return padL + (t / maxT) * plotW; };
     var Y = function(p){ return padT + (1 - p / 100) * plotH; };
-
-    // gridlines + y labels (0..100%)
-    ctx.font = (11 * dpr) + 'px "IBM Plex Mono", monospace';
-    ctx.fillStyle = '#9AA3AF'; ctx.strokeStyle = '#E4E7ED';
-    ctx.lineWidth = 1; ctx.textBaseline = 'middle';
     var g;
     for(g = 0; g <= 100; g += 25){
       var yy = Y(g);
       ctx.globalAlpha = 0.5; ctx.beginPath(); ctx.moveTo(padL, yy); ctx.lineTo(W - padR, yy); ctx.stroke(); ctx.globalAlpha = 1;
       ctx.textAlign = 'right'; ctx.fillText(g + '%', padL - 6 * dpr, yy);
     }
-    // x ticks
     ctx.textAlign = 'center'; ctx.textBaseline = 'top';
-    var tk;
-    for(tk = 0; tk <= 4; tk++){
-      var tday = maxT * tk / 4, xx = X(tday);
-      ctx.fillText(Math.round(tday), xx, H - padB + 6 * dpr);
-    }
-    ctx.fillStyle = '#5C6675'; ctx.textAlign = 'right'; ctx.textBaseline = 'bottom';
-    ctx.fillText('Tage', W - padR, H - 2 * dpr);
+    for(var tk = 0; tk <= 4; tk++){ var td = maxT * tk / 4; ctx.fillText(Math.round(td), X(td), H - padB + 6 * dpr); }
+    ctx.fillStyle = '#5C6675'; ctx.textAlign = 'right'; ctx.textBaseline = 'bottom'; ctx.fillText('Tage', W - padR, H - 2 * dpr);
+    return { X:X, Y:Y, padL:padL, padR:padR };
+  }
 
-    if(n < 2){ return; }
-    // stacked areas bottom->top: S, E, I, R (sum = 100)
-    var order = ['S','E','I','R'];
-    var base = new Array(n); for(var b = 0; b < n; b++) base[b] = 0;
-    order.forEach(function(key){
-      var top = new Array(n), j;
-      for(j = 0; j < n; j++) top[j] = base[j] + s[key][j];
-      ctx.beginPath();
-      ctx.moveTo(X(s.t[0]), Y(base[0]));
-      for(j = 0; j < n; j++) ctx.lineTo(X(s.t[j]), Y(top[j]));
-      for(j = n - 1; j >= 0; j--) ctx.lineTo(X(s.t[j]), Y(base[j]));
-      ctx.closePath();
-      ctx.fillStyle = COL[key];
-      ctx.globalAlpha = key === 'S' ? 0.30 : (key === 'R' ? 0.32 : 0.82);
-      ctx.fill(); ctx.globalAlpha = 1;
-      base = top;
-    });
-    // emphasise the infectious band with a crisp line on top of I
-    var cum = new Array(n), j2;
-    for(j2 = 0; j2 < n; j2++) cum[j2] = s.S[j2] + s.E[j2] + s.I[j2];
-    ctx.beginPath(); ctx.moveTo(X(s.t[0]), Y(cum[0]));
-    for(j2 = 0; j2 < n; j2++) ctx.lineTo(X(s.t[j2]), Y(cum[j2]));
-    ctx.strokeStyle = COL.I; ctx.lineWidth = 1.6 * dpr; ctx.stroke();
+  function drawChart(){
+    var cv = $('chart'), ctx = cv.getContext('2d'), dpr = fitCanvas(cv);
+    var W = cv.width, H = cv.height;
+    ctx.clearRect(0, 0, W, H);
+    var fr = chartFrame(ctx, W, H, dpr), X = fr.X, Y = fr.Y;
+    var s = sim.series, n = s.t.length;
+    if(n < 2) return;
+
+    if(chartMode === 'stack'){
+      var order = ['S','E','I','H','R'], base = new Array(n), b;
+      for(b = 0; b < n; b++) base[b] = 0;
+      order.forEach(function(key){
+        var top = new Array(n), j;
+        for(j = 0; j < n; j++) top[j] = base[j] + s[key][j];
+        ctx.beginPath(); ctx.moveTo(X(s.t[0]), Y(base[0]));
+        for(j = 0; j < n; j++) ctx.lineTo(X(s.t[j]), Y(top[j]));
+        for(j = n - 1; j >= 0; j--) ctx.lineTo(X(s.t[j]), Y(base[j]));
+        ctx.closePath();
+        ctx.fillStyle = COL[key];
+        ctx.globalAlpha = key === 'S' ? 0.30 : (key === 'R' ? 0.32 : 0.82);
+        ctx.fill(); ctx.globalAlpha = 1; base = top;
+      });
+    } else {
+      // prevalence: non-stacked lines, infectious + hospitalised emphasised
+      var line = function(key, width, alpha, fill){
+        ctx.beginPath();
+        for(var j = 0; j < n; j++){ var x = X(s.t[j]), y = Y(s[key][j]); if(j === 0) ctx.moveTo(x, y); else ctx.lineTo(x, y); }
+        if(fill){
+          ctx.lineTo(X(s.t[n-1]), Y(0)); ctx.lineTo(X(s.t[0]), Y(0)); ctx.closePath();
+          ctx.fillStyle = COL[key]; ctx.globalAlpha = alpha; ctx.fill(); ctx.globalAlpha = 1;
+        } else {
+          ctx.strokeStyle = COL[key]; ctx.globalAlpha = alpha; ctx.lineWidth = width * dpr; ctx.stroke(); ctx.globalAlpha = 1;
+        }
+      };
+      line('S', 1.2, 0.45);          // context
+      line('R', 1.2, 0.45);
+      line('E', 1.4, 0.7);
+      if(params.module){ line('H', 0, 0.22, true); line('H', 2.0, 0.95); }
+      line('I', 0, 0.16, true);      // the hump
+      line('I', 2.4, 1);
+      if(params.module){            // hospital capacity reference line
+        var yc = Y(params.hospCap); ctx.save(); ctx.setLineDash([5*dpr,4*dpr]);
+        ctx.strokeStyle = COL.H; ctx.globalAlpha = 0.8; ctx.lineWidth = 1.4 * dpr;
+        ctx.beginPath(); ctx.moveTo(fr.padL, yc); ctx.lineTo(W - fr.padR, yc); ctx.stroke(); ctx.restore(); ctx.globalAlpha = 1;
+      }
+    }
   }
 
   function updateMetrics(){
     var c = Core.counts(sim), N = sim.agents.length;
     $('m-day').textContent = Math.floor(sim.day);
     $('m-inf').innerHTML = c.I + ' <small>(' + (100*c.I/N).toFixed(0) + '%)</small>';
+    if(params.module){
+      var over = sim.capExceeded ? ' ⚠︎' : '';
+      $('m-hosp').innerHTML = c.H + ' <small>(' + (100*c.H/N).toFixed(1) + '%)' + over + '</small>';
+    } else { $('m-hosp').innerHTML = '–'; }
     $('m-attack').textContent = (100 * sim.cum / N).toFixed(0) + '%';
     var rt = Core.rtMeasured(sim);
     $('m-rt').textContent = rt == null ? '–' : rt.toFixed(2);
     $('over-badge').classList.toggle('show', sim.over);
   }
 
-  var lastT = 0;
   function frame(){
-    if(running && sim){
-      var steps = mult;
-      for(var k = 0; k < steps; k++){ if(!sim.over) Core.stepSim(sim); }
-    }
+    if(running && sim){ for(var k = 0; k < mult; k++){ if(!sim.over) Core.stepSim(sim); } }
     if(sim){ drawArena(); drawChart(); updateMetrics(); }
     requestAnimationFrame(frame);
   }
 
-  // expose for headless wiring tests
   (typeof window !== 'undefined' ? window : globalThis).__ABM_DEBUG = {
-    getSim: function(){ return sim; }, getParams: function(){ return params; },
-    setRunning: function(v){ running = v; }
+    getSim: function(){ return sim; }, getParams: function(){ return params; }, setRunning: function(v){ running = v; },
+    setChartMode: function(m){ chartMode = m; }
   };
 
   rebuild();
