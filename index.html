@@ -160,6 +160,14 @@
           <div class="top"><label for="inf">Infektiöse Periode = 1/γ (Tage)</label><span class="val" id="inf-out">8</span></div>
           <input type="range" id="inf" min="1" max="24" step="1" value="8">
         </div>
+        <div class="ctrl">
+          <div class="top"><label for="wane">Immunitätsverlust (R → S)</label>
+            <label class="switch" title="ein/aus"><input type="checkbox" id="wane"><span class="track"></span></label></div>
+        </div>
+        <div class="ctrl disabled" id="ctrl-immdur">
+          <div class="top"><label for="immdur">Immunitätsdauer = 1/ω (Tage)</label><span class="val" id="immdur-out">60</span></div>
+          <input type="range" id="immdur" min="15" max="400" step="5" value="60" disabled>
+        </div>
       </div>
 
       <div class="group">
@@ -325,7 +333,7 @@
         x: margin + rng() * (WORLD_W - 2*margin),
         y: margin + rng() * (WORLD_H - 2*margin),
         ang: rng() * Math.PI * 2,
-        state: 'S', sec: 0, actRank: rng(),
+        state: 'S', sec: 0, ever: false, actRank: rng(),
         qWill: false, q: false, qClock: 0,
         willHosp: false, hClock: 0, infDay: -1
       };
@@ -337,12 +345,12 @@
     var seeded = 0, cum = 0;
     for(i = nImm; i < N && seeded < SEED_INFECTIONS; i++){
       var ag = agents[order[i]];
-      if(ag.state === 'S'){ ag.state = 'I'; ag.infDay = 0; ag.willHosp = !!p.module && rng() < (p.hospFrac||0)/100; ag.qWill = rng() < (p.qfrac||0)/100; seeded++; cum++; }
+      if(ag.state === 'S'){ ag.state = 'I'; ag.infDay = 0; ag.ever = true; ag.willHosp = !!p.module && rng() < (p.hospFrac||0)/100; ag.qWill = rng() < (p.qfrac||0)/100; seeded++; cum++; }
     }
     var sim = {
       agents: agents, W: WORLD_W, H: WORLD_H, params: p, rng: rng,
       day: 0, lastRec: -1, peakI: 0, peakDay: 0, peakH: 0, capExceeded: false,
-      cum: cum, adapt: 0, recentR: [], flashes: [], over: false,
+      cum: cum, everInf: cum, adapt: 0, recentR: [], flashes: [], over: false,
       series: { t: [], S: [], E: [], I: [], R: [], H: [] }
     };
     record(sim);
@@ -403,7 +411,8 @@
           if(b.state !== 'S' || b._inf) continue;
           var dx = a.x - b.x, dy = a.y - b.y; if(dx*dx + dy*dy > r2) continue;
           if(rng() < pInf * rmA * riskMul(groupOf(b, p), p)){
-            b._inf = true; a.sec++; sim.cum++; b.infDay = sim.day;
+            b._inf = true; a.sec++; sim.cum++; b.infDay = sim.day; b.sec = 0;
+            if(!b.ever){ b.ever = true; sim.everInf++; }
             if(p.lat > 0){ b.state = 'E'; }
             else { b.state = 'I'; b.willHosp = !!p.module && rng() < (p.hospFrac||0)/100; b.qWill = rng() < (p.qfrac||0)/100; b.qClock = 0; b.hClock = 0; }
             sim.flashes.push({ x: b.x, y: b.y, t: 0 });
@@ -417,6 +426,7 @@
     // severe cases are admitted partway through their illness (then isolated)
     var hospDelayDays = Math.max(2, Math.min(6, p.inf * 0.5));
     var pAdmit = 1 - Math.exp(-DT / hospDelayDays);
+    var pWane = (p.wane && p.immdur > 0) ? (1 - Math.exp(-DT / p.immdur)) : 0;
     for(i = 0; i < N; i++){
       a = ag[i];
       if(a.state === 'E'){
@@ -431,6 +441,8 @@
       } else if(a.state === 'H'){
         a.hClock += DT;
         if(a.hClock >= p.hospStay) a.state = 'R';
+      } else if(a.state === 'R'){
+        if(pWane && rng() < pWane) a.state = 'S';   // waning immunity: R -> S
       }
     }
     // --- bookkeeping ---
@@ -465,14 +477,14 @@
   var $ = function(id){ return document.getElementById(id); };
 
   var params = {
-    seed: 1, N:320, speed:1.0, radius:12, beta:1.6, lat:3, inf:8,
+    seed: 1, N:320, speed:1.0, radius:12, beta:1.6, lat:3, inf:8, wane:0, immdur:60,
     essFrac:0, homeFrac:0, homeRisk:30,
     vac:0, qfrac:0, qdelay:2,
     module:0, hospFrac:8, hospStay:7, hospCap:2, reactSens:50
   };
   var sim = null, running = true, mult = 2, seedCounter = 1, chartMode = 'stack', showGroups = false, personMode = true;
 
-  var sliders = ['N','speed','radius','beta','lat','inf','essFrac','homeFrac','homeRisk','vac','qfrac','qdelay','hospFrac','hospStay','hospCap','reactSens'];
+  var sliders = ['N','speed','radius','beta','lat','inf','immdur','essFrac','homeFrac','homeRisk','vac','qfrac','qdelay','hospFrac','hospStay','hospCap','reactSens'];
   var fmt = { speed:function(v){return v.toFixed(1);}, beta:function(v){return v.toFixed(1);}, hospCap:function(v){return v.toFixed(1);} };
   var structural = { N:true, vac:true };
   var modSliders = ['hospFrac','hospStay','hospCap','reactSens'];
@@ -511,6 +523,11 @@
 
   $('showGroups').addEventListener('change', function(){ showGroups = this.checked; });
   $('personMode').addEventListener('change', function(){ personMode = this.checked; });
+  $('wane').addEventListener('change', function(){
+    params.wane = this.checked ? 1 : 0;
+    $('ctrl-immdur').classList.toggle('disabled', !this.checked);
+    $('immdur').disabled = !this.checked;
+  });
 
   $('btn-play').addEventListener('click', function(){
     running = !running;
@@ -680,7 +697,7 @@
       var over = sim.capExceeded ? ' ⚠︎' : '';
       $('m-hosp').innerHTML = c.H + ' <small>(' + (100*c.H/N).toFixed(1) + '%)' + over + '</small>';
     } else { $('m-hosp').innerHTML = '–'; }
-    $('m-attack').textContent = (100 * sim.cum / N).toFixed(0) + '%';
+    $('m-attack').textContent = (100 * sim.everInf / N).toFixed(0) + '%';
     var rt = Core.rtMeasured(sim);
     $('m-rt').textContent = rt == null ? '–' : rt.toFixed(2);
     $('over-badge').classList.toggle('show', sim.over);

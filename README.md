@@ -9,7 +9,9 @@ Einzelnen (Mikro → Makro) — die anschauliche Ergänzung zum
 **Live:** https://clinical-pharmacy-saarland-university.github.io/abm-infektion/
 
 ## Didaktische Stellschrauben
-- **Erreger:** Übertragungsrate β, Latenzzeit (1/σ), infektiöse Periode (1/γ)
+- **Erreger:** Übertragungsrate β, Latenzzeit (1/σ), infektiöse Periode (1/γ); optional
+  **Immunitätsverlust** (R → S, mittlere Dauer 1/ω) → endemische Dynamik / wiederkehrende Wellen
+- **Darstellung:** Agenten wahlweise als kleine **Personen** (Standard) oder als **Punkte**
 - **Bevölkerungsstruktur:** Aktivitätsgruppen — *Essential Worker* (viele Kontakte) vs. *Homeoffice*
   (wenige Kontakte) mit regelbar reduziertem Transmissionsrisiko
 - **Interventionen:** Impfung/Anfangsimmunität, Quarantäne/Isolation
