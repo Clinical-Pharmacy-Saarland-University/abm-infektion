@@ -243,6 +243,7 @@
           <span><span class="dot q"></span>isoliert</span>
           <span><span class="dot hosp"></span>hospitalisiert</span>
           <span class="spacer"></span>
+          <label class="chk"><input type="checkbox" id="personMode" checked>Als Personen</label>
           <label class="chk"><input type="checkbox" id="showGroups">Gruppen markieren</label>
         </div>
         <div class="arena-wrap">
@@ -469,7 +470,7 @@
     vac:0, qfrac:0, qdelay:2,
     module:0, hospFrac:8, hospStay:7, hospCap:2, reactSens:50
   };
-  var sim = null, running = true, mult = 2, seedCounter = 1, chartMode = 'stack', showGroups = false;
+  var sim = null, running = true, mult = 2, seedCounter = 1, chartMode = 'stack', showGroups = false, personMode = true;
 
   var sliders = ['N','speed','radius','beta','lat','inf','essFrac','homeFrac','homeRisk','vac','qfrac','qdelay','hospFrac','hospStay','hospCap','reactSens'];
   var fmt = { speed:function(v){return v.toFixed(1);}, beta:function(v){return v.toFixed(1);}, hospCap:function(v){return v.toFixed(1);} };
@@ -509,6 +510,7 @@
   });
 
   $('showGroups').addEventListener('change', function(){ showGroups = this.checked; });
+  $('personMode').addEventListener('change', function(){ personMode = this.checked; });
 
   $('btn-play').addEventListener('click', function(){
     running = !running;
@@ -535,6 +537,30 @@
     return dpr;
   }
 
+  // little-person silhouette (head + rounded-shoulder torso) in a local box
+  function drawPerson(ctx, cx, cy, h, color){
+    var headR = h*0.22, bw = h*0.30, topY = cy - h*0.04, botY = cy + h*0.46;
+    ctx.beginPath();
+    ctx.moveTo(cx - bw, botY);
+    ctx.lineTo(cx - bw, topY);
+    ctx.quadraticCurveTo(cx - bw, topY - h*0.18, cx, topY - h*0.18);
+    ctx.quadraticCurveTo(cx + bw, topY - h*0.18, cx + bw, topY);
+    ctx.lineTo(cx + bw, botY);
+    ctx.closePath();
+    ctx.fillStyle = color; ctx.fill();
+    ctx.beginPath(); ctx.arc(cx, cy - h*0.32, headR, 0, Math.PI*2); ctx.fillStyle = color; ctx.fill();
+  }
+  // pre-render one sprite per (state, size) and reuse — cheap to blit for hundreds of agents
+  var spriteCache = {};
+  function getSprite(state, h){
+    var hh = Math.max(7, Math.round(h)), key = state + '@' + hh;
+    if(spriteCache[key]) return spriteCache[key];
+    var dim = hh + 4, off = document.createElement('canvas');
+    off.width = dim; off.height = dim;
+    drawPerson(off.getContext('2d'), dim/2, dim/2, hh, COL[state]);
+    return (spriteCache[key] = off);
+  }
+
   function drawArena(){
     var cv = $('arena'), ctx = cv.getContext('2d');
     fitCanvas(cv);
@@ -555,10 +581,19 @@
         if(g === 0){ ctx.beginPath(); ctx.arc(px, py, rad * 2.3, 0, Math.PI*2); ctx.strokeStyle = 'rgba(120,200,255,.55)'; ctx.lineWidth = 1; ctx.stroke(); }
         else if(g === 2){ ctx.beginPath(); ctx.arc(px, py, rad * 1.7, 0, Math.PI*2); ctx.strokeStyle = 'rgba(150,160,175,.5)'; ctx.lineWidth = 1; ctx.stroke(); }
       }
-      ctx.beginPath();
-      ctx.arc(px, py, (a.state === 'I' || a.state === 'H') ? rad * 1.35 : rad, 0, Math.PI * 2);
-      ctx.fillStyle = COL[a.state]; ctx.fill();
-      if(a.q){ ctx.lineWidth = 1.5 * sx; ctx.strokeStyle = '#fff'; ctx.stroke(); }
+      var big = (a.state === 'I' || a.state === 'H');
+      if(personMode){
+        var ph = (big ? rad * 1.35 : rad) * 3.2;
+        var bob = (a.state === 'H' || a.q) ? 0 : Math.sin(sim.day * 4 + a.actRank * 6.283) * rad * 0.16;
+        var spr = getSprite(a.state, ph);
+        ctx.drawImage(spr, px - spr.width / 2, py - spr.height / 2 + bob);
+        if(a.q){ ctx.beginPath(); ctx.arc(px, py, rad * 1.6, 0, Math.PI * 2); ctx.lineWidth = 1.5 * sx; ctx.strokeStyle = '#fff'; ctx.stroke(); }
+      } else {
+        ctx.beginPath();
+        ctx.arc(px, py, big ? rad * 1.35 : rad, 0, Math.PI * 2);
+        ctx.fillStyle = COL[a.state]; ctx.fill();
+        if(a.q){ ctx.lineWidth = 1.5 * sx; ctx.strokeStyle = '#fff'; ctx.stroke(); }
+      }
     }
   }
 
