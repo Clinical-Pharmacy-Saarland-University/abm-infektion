@@ -1,0 +1,578 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Agentenbasiertes Infektionsmodell · SEIR</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;700&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --ink:#16202E; --muted:#5C6675; --line:#E4E7ED; --paper:#F4F6F8; --panel:#FFFFFF;
+    --s:#2F6FB0; --e:#E8881C; --i:#C62828; --r:#16876A;
+    --accent:#243049; --ok:#16876A; --warn:#C13A18;
+    --radius:12px;
+  }
+  *{box-sizing:border-box;}
+  html{font-size:16px;}
+  body{
+    margin:0; background:var(--paper); color:var(--ink);
+    font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+    line-height:1.6; padding:28px 20px 48px;
+  }
+  .wrap{max-width:1180px; margin:0 auto;}
+  .eyebrow{font-family:"Space Grotesk",sans-serif; font-size:12px; letter-spacing:.14em;
+    text-transform:uppercase; color:var(--muted); margin:0 0 6px;}
+  h1{font-family:"Space Grotesk",sans-serif; font-weight:700; font-size:30px;
+    line-height:1.15; margin:0 0 6px;}
+  .sub{color:var(--muted); margin:0 0 26px; max-width:70ch;}
+  .band{display:grid; grid-template-columns:330px 1fr; gap:20px; align-items:start;}
+  .card{background:var(--panel); border:1px solid var(--line); border-radius:var(--radius);
+    padding:20px 22px;}
+  .card h2{font-family:"Space Grotesk",sans-serif; font-weight:500; font-size:15px;
+    letter-spacing:.02em; margin:0 0 16px; color:var(--ink);}
+  .group{margin:0 0 18px; padding:0 0 16px; border-bottom:1px solid var(--line);}
+  .group:last-of-type{border-bottom:none; padding-bottom:0;}
+  .group > .glabel{font-family:"Space Grotesk",sans-serif; font-size:11px; letter-spacing:.12em;
+    text-transform:uppercase; color:var(--muted); margin:0 0 12px;}
+
+  .ctrl{margin-bottom:14px;}
+  .ctrl:last-child{margin-bottom:0;}
+  .ctrl.disabled{opacity:.4;}
+  .ctrl .top{display:flex; justify-content:space-between; align-items:baseline; margin-bottom:6px;}
+  .ctrl label{font-size:13.5px; color:var(--muted);}
+  .ctrl .val{font-family:"IBM Plex Mono",monospace; font-weight:500; font-size:14px; color:var(--ink);}
+  input[type=range]{-webkit-appearance:none; appearance:none; width:100%; height:4px;
+    background:var(--line); border-radius:4px; outline:none; cursor:pointer;}
+  input[type=range]::-webkit-slider-thumb{-webkit-appearance:none; appearance:none;
+    width:18px; height:18px; border-radius:50%; background:var(--accent); border:2px solid #fff;
+    box-shadow:0 0 0 1px var(--line);}
+  input[type=range]::-moz-range-thumb{width:16px; height:16px; border-radius:50%;
+    background:var(--accent); border:2px solid #fff;}
+  input[type=range]:focus-visible{box-shadow:0 0 0 3px rgba(36,48,73,.25);}
+  input[type=range]:disabled{cursor:not-allowed;}
+
+  .btns{display:flex; gap:10px; margin-top:4px;}
+  .btns button{flex:1; font:inherit; font-size:14px; font-weight:500; padding:10px 8px;
+    border-radius:8px; border:1px solid var(--line); cursor:pointer; transition:background .15s,color .15s,border-color .15s;}
+  #btn-play{background:var(--accent); color:#fff; border-color:var(--accent);}
+  #btn-play.paused{background:var(--ok); border-color:var(--ok);}
+  #btn-reset{background:var(--paper); color:var(--ink);}
+  #btn-reset:hover{border-color:var(--accent);}
+  button:focus-visible{outline:2px solid var(--accent); outline-offset:2px;}
+
+  .speedrow{display:flex; align-items:center; gap:8px; margin-top:14px;}
+  .speedrow span{font-size:13px; color:var(--muted);}
+  .seg{display:flex; gap:4px; background:var(--paper); border:1px solid var(--line); border-radius:8px; padding:3px;}
+  .seg button{border:none; background:transparent; color:var(--muted); font:inherit; font-size:13px;
+    padding:5px 10px; border-radius:6px; cursor:pointer;}
+  .seg button.active{background:var(--accent); color:#fff;}
+
+  .hint{font-size:12.5px; color:var(--muted); margin:16px 0 0; padding-top:14px; border-top:1px solid var(--line);}
+
+  .arena-card{padding:18px;}
+  .legend{display:flex; flex-wrap:wrap; gap:16px; margin-bottom:12px; font-size:13px; color:var(--muted);}
+  .legend span{display:flex; align-items:center; gap:7px;}
+  .dot{width:12px; height:12px; border-radius:50%; flex:none;}
+  .dot.s{background:var(--s);} .dot.e{background:var(--e);} .dot.i{background:var(--i);} .dot.r{background:var(--r);}
+  .dot.q{background:#fff; border:2px solid var(--ink); width:12px; height:12px;}
+  .arena-wrap{position:relative; width:100%; aspect-ratio:900/560; background:#0E1622; border-radius:10px; overflow:hidden;}
+  #arena{position:absolute; inset:0; width:100%; height:100%; display:block;}
+  .over-badge{position:absolute; top:10px; left:10px; background:rgba(14,22,34,.82); color:#fff;
+    font-size:12.5px; padding:5px 10px; border-radius:7px; display:none;}
+  .over-badge.show{display:block;}
+
+  .metrics{display:grid; grid-template-columns:repeat(4,1fr); gap:10px; margin-top:14px;}
+  .metric{border:1px solid var(--line); border-radius:9px; padding:10px 12px;}
+  .metric .k{font-size:11px; letter-spacing:.06em; text-transform:uppercase; color:var(--muted); margin:0;}
+  .metric .v{font-family:"IBM Plex Mono",monospace; font-weight:500; font-size:20px; margin:3px 0 0;}
+  .metric .v small{font-size:12px; color:var(--muted);}
+  .metric.rt{border-color:var(--accent);}
+
+  .chartcard{margin-top:20px;}
+  .chart-wrap{position:relative; width:100%; height:300px;}
+  #chart{position:absolute; inset:0; width:100%; height:100%;}
+  .foot{margin-top:22px; font-size:12.5px; color:var(--muted); max-width:90ch;}
+  .foot strong{font-weight:500; color:var(--ink);}
+
+  @media (max-width:880px){
+    .band{grid-template-columns:1fr;}
+    h1{font-size:25px;}
+    .metrics{grid-template-columns:repeat(2,1fr);}
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <p class="eyebrow">Interaktives Seminarwerkzeug · Infektionsepidemiologie</p>
+  <h1>Agentenbasiertes Infektionsmodell (SEIR)</h1>
+  <p class="sub">Jeder Punkt ist eine Person. Bei Kontakt überträgt sich der Erreger mit einer Wahrscheinlichkeit; Angesteckte durchlaufen <strong>S → E → I → R</strong>. Beobachte, wie aus dem Verhalten der Einzelnen die Epidemiekurve rechts entsteht — und wie Kontaktreduktion, Impfung und Quarantäne sie verändern. Schwestermodell zum <a href="https://clinical-pharmacy-saarland-university.github.io/seir-simulator/">SEIR-Kompartimentmodell</a>.</p>
+
+  <div class="band">
+    <div class="card" id="controls">
+      <h2>Steuerung</h2>
+
+      <div class="group">
+        <p class="glabel">Population &amp; Bewegung</p>
+        <div class="ctrl">
+          <div class="top"><label for="N">Bevölkerung</label><span class="val" id="N-out">320</span></div>
+          <input type="range" id="N" min="50" max="800" step="10" value="320">
+        </div>
+        <div class="ctrl">
+          <div class="top"><label for="speed">Bewegungstempo</label><span class="val" id="speed-out">1.0</span></div>
+          <input type="range" id="speed" min="0" max="2.5" step="0.1" value="1">
+        </div>
+        <div class="ctrl">
+          <div class="top"><label for="radius">Infektionsradius</label><span class="val" id="radius-out">12</span></div>
+          <input type="range" id="radius" min="4" max="26" step="1" value="12">
+        </div>
+      </div>
+
+      <div class="group">
+        <p class="glabel">Erreger</p>
+        <div class="ctrl">
+          <div class="top"><label for="beta">Übertragungsrate β (pro Tag bei Kontakt)</label><span class="val" id="beta-out">1.6</span></div>
+          <input type="range" id="beta" min="0.1" max="4" step="0.1" value="1.6">
+        </div>
+        <div class="ctrl">
+          <div class="top"><label for="lat">Latenzzeit = 1/σ (Tage)</label><span class="val" id="lat-out">3</span></div>
+          <input type="range" id="lat" min="0" max="12" step="1" value="3">
+        </div>
+        <div class="ctrl">
+          <div class="top"><label for="inf">Infektiöse Periode = 1/γ (Tage)</label><span class="val" id="inf-out">8</span></div>
+          <input type="range" id="inf" min="1" max="24" step="1" value="8">
+        </div>
+      </div>
+
+      <div class="group">
+        <p class="glabel">Interventionen</p>
+        <div class="ctrl">
+          <div class="top"><label for="vac">Impfung / Immunität zu Beginn (%)</label><span class="val" id="vac-out">0</span></div>
+          <input type="range" id="vac" min="0" max="90" step="1" value="0">
+        </div>
+        <div class="ctrl">
+          <div class="top"><label for="dist">Kontaktreduktion (% bleiben zuhause)</label><span class="val" id="dist-out">0</span></div>
+          <input type="range" id="dist" min="0" max="95" step="1" value="0">
+        </div>
+        <div class="ctrl">
+          <div class="top"><label for="qfrac">Quarantäne: Anteil isolierter Fälle (%)</label><span class="val" id="qfrac-out">0</span></div>
+          <input type="range" id="qfrac" min="0" max="100" step="1" value="0">
+        </div>
+        <div class="ctrl disabled" id="ctrl-qdelay">
+          <div class="top"><label for="qdelay">… Verzögerung bis Isolation (Tage)</label><span class="val" id="qdelay-out">2</span></div>
+          <input type="range" id="qdelay" min="0" max="8" step="1" value="2">
+        </div>
+      </div>
+
+      <div class="btns">
+        <button id="btn-play" type="button">Pause</button>
+        <button id="btn-reset" type="button">Neustart</button>
+      </div>
+      <div class="speedrow">
+        <span>Tempo</span>
+        <div class="seg" id="seg-speed" role="group" aria-label="Wiedergabetempo">
+          <button data-mult="1" type="button">1×</button>
+          <button data-mult="2" class="active" type="button">2×</button>
+          <button data-mult="4" type="button">4×</button>
+        </div>
+      </div>
+
+      <p class="hint">R₀ ist hier keine Stellgröße, sondern entsteht aus β, Infektionsradius, Bewegungstempo und Dichte — und wird live gemessen (Rₜ rechts). Bevölkerung und Impfquote setzen den Lauf zurück; Kontaktreduktion und Quarantäne wirken auch <em>mitten</em> in der Welle.</p>
+    </div>
+
+    <div>
+      <div class="card arena-card">
+        <div class="legend">
+          <span><span class="dot s"></span>Susceptible</span>
+          <span><span class="dot e"></span>Exposed (latent)</span>
+          <span><span class="dot i"></span>Infectious</span>
+          <span><span class="dot r"></span>Recovered / immun</span>
+          <span><span class="dot q"></span>isoliert</span>
+        </div>
+        <div class="arena-wrap">
+          <canvas id="arena" role="img" aria-label="Simulationsfeld mit Agenten, farbcodiert nach Infektionszustand."></canvas>
+          <div class="over-badge" id="over-badge">Epidemie erloschen</div>
+        </div>
+        <div class="metrics">
+          <div class="metric"><p class="k">Tag</p><p class="v" id="m-day">0</p></div>
+          <div class="metric"><p class="k">Aktuell infektiös</p><p class="v" id="m-inf">–</p></div>
+          <div class="metric"><p class="k">Je infiziert</p><p class="v" id="m-attack">–</p></div>
+          <div class="metric rt"><p class="k">Rₜ (gemessen)</p><p class="v" id="m-rt">–</p></div>
+        </div>
+      </div>
+
+      <div class="card chartcard">
+        <div class="chart-wrap">
+          <canvas id="chart" role="img" aria-label="Epidemiekurve: Anteil der Bevölkerung in den Zuständen S, E, I, R über die Zeit."></canvas>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <p class="foot"><strong>Modell:</strong> Agenten bewegen sich zufällig in einem festen Feld; bei Abstand &lt; Infektionsradius wird ein Susceptibler mit Rate β/Tag angesteckt. Latenz (E→I) und Genesung (I→R) sind exponentiell verteilt mit Mittelwert 1/σ bzw. 1/γ (wie im SEIR-Modell). Geimpfte/Immune starten in R, „Kontaktreduzierte“ bewegen sich nicht, isolierte Fälle stecken niemanden mehr an. Rₜ wird direkt im Modell gemessen (mittlere Zahl der Folgeinfektionen je kürzlich genesener Person). Stochastisches Modell — jeder Neustart verläuft etwas anders.</p>
+</div>
+
+<script id="abm-core">
+/* ===== PURE SIMULATION CORE — no DOM, no canvas (testable in Node) ===== */
+(function(G){
+  'use strict';
+
+  // Fixed logical world so dynamics are independent of screen size.
+  var WORLD_W = 900, WORLD_H = 560;
+  var FRAMES_PER_DAY = 20;           // dt = 1/20 day per simulation step
+  var DT = 1 / FRAMES_PER_DAY;
+  var MOVE = 3.4;                    // logical px per step at speed 1
+  var SEED_INFECTIONS = 4;
+  var FLASH_TTL = 0.6;              // days a new-infection ring is shown
+
+  function mulberry32(a){
+    return function(){
+      a |= 0; a = (a + 0x6D2B79F5) | 0;
+      var t = Math.imul(a ^ (a >>> 15), 1 | a);
+      t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t;
+      return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
+    };
+  }
+
+  function createSim(p){
+    var rng = mulberry32((p.seed >>> 0) || 1);
+    var N = p.N;
+    var agents = new Array(N);
+    var margin = 6;
+    var i, a;
+    for(i = 0; i < N; i++){
+      a = {
+        x: margin + rng() * (WORLD_W - 2*margin),
+        y: margin + rng() * (WORLD_H - 2*margin),
+        ang: rng() * Math.PI * 2,
+        state: 'S',
+        sec: 0,            // secondary infections caused
+        distRank: rng(),   // stationary iff distRank < dist fraction (stable under slider changes)
+        qWill: false, q: false, qClock: 0,
+        infDay: -1
+      };
+      agents[i] = a;
+    }
+    // Vaccinated / initially immune: a random subset starts in R.
+    var nImm = Math.round(N * (p.vac || 0) / 100);
+    var order = [];
+    for(i = 0; i < N; i++) order.push(i);
+    for(i = N - 1; i > 0; i--){ var j = Math.floor(rng() * (i + 1)); var tmp = order[i]; order[i] = order[j]; order[j] = tmp; }
+    for(i = 0; i < nImm; i++) agents[order[i]].state = 'R';
+    // Seed infections among the remaining susceptibles.
+    var seeded = 0, cum = 0;
+    for(i = nImm; i < N && seeded < SEED_INFECTIONS; i++){
+      var ag = agents[order[i]];
+      if(ag.state === 'S'){ ag.state = 'I'; ag.infDay = 0; ag.qWill = rng() < (p.qfrac||0)/100; seeded++; cum++; }
+    }
+    var sim = {
+      agents: agents, W: WORLD_W, H: WORLD_H, params: p, rng: rng,
+      day: 0, lastRec: -1, peakI: 0, peakDay: 0, cum: cum, baseS: N - nImm,
+      recentR: [], flashes: [], over: false,
+      series: { t: [], S: [], E: [], I: [], R: [] }
+    };
+    record(sim);
+    return sim;
+  }
+
+  function counts(sim){
+    var c = { S:0, E:0, I:0, R:0 }, ag = sim.agents, i;
+    for(i = 0; i < ag.length; i++) c[ag[i].state]++;
+    return c;
+  }
+
+  function record(sim){
+    var c = counts(sim), N = sim.agents.length, s = sim.series;
+    s.t.push(sim.day);
+    s.S.push(100*c.S/N); s.E.push(100*c.E/N); s.I.push(100*c.I/N); s.R.push(100*c.R/N);
+  }
+
+  function rtMeasured(sim){
+    var p = sim.params, Wd = Math.max(6, 2 * p.inf), arr = sim.recentR;
+    var sum = 0, n = 0, i;
+    for(i = 0; i < arr.length; i++){
+      if(sim.day - arr[i].day <= Wd){ sum += arr[i].sec; n++; }
+    }
+    return n > 0 ? sum / n : null;
+  }
+
+  // One simulation step (DT days). Mutates sim in place.
+  function stepSim(sim){
+    var p = sim.params, ag = sim.agents, N = ag.length, rng = sim.rng, i, a;
+    var distFrac = (p.dist || 0) / 100;
+    var move = p.speed * MOVE;
+    // --- movement ---
+    for(i = 0; i < N; i++){
+      a = ag[i];
+      var stationary = (a.distRank < distFrac) || a.q;
+      if(stationary) continue;
+      a.ang += (rng() - 0.5) * 0.4;            // gentle random walk
+      a.x += Math.cos(a.ang) * move;
+      a.y += Math.sin(a.ang) * move;
+      if(a.x < 4){ a.x = 4; a.ang = Math.PI - a.ang; }
+      else if(a.x > sim.W - 4){ a.x = sim.W - 4; a.ang = Math.PI - a.ang; }
+      if(a.y < 4){ a.y = 4; a.ang = -a.ang; }
+      else if(a.y > sim.H - 4){ a.y = sim.H - 4; a.ang = -a.ang; }
+    }
+    // --- spatial grid ---
+    var cell = Math.max(p.radius, 10);
+    var cols = Math.ceil(sim.W / cell);
+    var grid = {};
+    for(i = 0; i < N; i++){
+      a = ag[i]; a._inf = false;
+      var key = (Math.floor(a.x / cell)) + ',' + (Math.floor(a.y / cell));
+      (grid[key] || (grid[key] = [])).push(i);
+    }
+    // --- infection ---
+    var r2 = p.radius * p.radius;
+    var pInf = 1 - Math.exp(-DT * p.beta);
+    for(i = 0; i < N; i++){
+      a = ag[i];
+      if(a.state !== 'I' || a.q) continue;
+      var cx = Math.floor(a.x / cell), cy = Math.floor(a.y / cell), gx, gy, k;
+      for(gx = cx - 1; gx <= cx + 1; gx++){
+        for(gy = cy - 1; gy <= cy + 1; gy++){
+          var bucket = grid[gx + ',' + gy];
+          if(!bucket) continue;
+          for(k = 0; k < bucket.length; k++){
+            var b = ag[bucket[k]];
+            if(b.state !== 'S' || b._inf) continue;
+            var dx = a.x - b.x, dy = a.y - b.y;
+            if(dx*dx + dy*dy > r2) continue;
+            if(rng() < pInf){
+              b._inf = true; a.sec++; sim.cum++;
+              b.infDay = sim.day;
+              if(p.lat > 0){ b.state = 'E'; }
+              else { b.state = 'I'; b.qWill = rng() < (p.qfrac||0)/100; b.qClock = 0; }
+              sim.flashes.push({ x: b.x, y: b.y, t: 0 });
+            }
+          }
+        }
+      }
+    }
+    // --- transitions ---
+    var pSig = p.lat > 0 ? (1 - Math.exp(-DT / p.lat)) : 1;
+    var pGam = 1 - Math.exp(-DT / p.inf);
+    for(i = 0; i < N; i++){
+      a = ag[i];
+      if(a.state === 'E'){
+        if(rng() < pSig){ a.state = 'I'; a.qWill = rng() < (p.qfrac||0)/100; a.qClock = 0; }
+      } else if(a.state === 'I'){
+        if(a.qWill && !a.q){ a.qClock += DT; if(a.qClock >= p.qdelay) a.q = true; }
+        if(rng() < pGam){ a.state = 'R'; a.q = false; sim.recentR.push({ day: sim.day, sec: a.sec }); }
+      }
+    }
+    // --- bookkeeping ---
+    sim.day += DT;
+    var c = counts(sim);
+    if(c.I > sim.peakI){ sim.peakI = c.I; sim.peakDay = sim.day; }
+    var f;
+    for(i = sim.flashes.length - 1; i >= 0; i--){ f = sim.flashes[i]; f.t += DT; if(f.t > FLASH_TTL) sim.flashes.splice(i, 1); }
+    while(sim.recentR.length && sim.day - sim.recentR[0].day > Math.max(6, 2 * p.inf) + 2) sim.recentR.shift();
+    if(Math.floor(sim.day) > sim.lastRec){ sim.lastRec = Math.floor(sim.day); record(sim); }
+    if(c.E === 0 && c.I === 0) sim.over = true;
+    return sim;
+  }
+
+  G.ABMCore = {
+    createSim: createSim, stepSim: stepSim, counts: counts,
+    rtMeasured: rtMeasured, record: record,
+    WORLD_W: WORLD_W, WORLD_H: WORLD_H, FRAMES_PER_DAY: FRAMES_PER_DAY
+  };
+})(typeof window !== 'undefined' ? window : globalThis);
+</script>
+
+<script id="abm-ui">
+/* ===== UI: DOM + canvas rendering (browser only) ===== */
+(function(){
+  'use strict';
+  if(typeof document === 'undefined') return;
+  var Core = (typeof window !== 'undefined' ? window : globalThis).ABMCore;
+
+  var COL = { S:'#2F6FB0', E:'#E8881C', I:'#C62828', R:'#16876A' };
+  var $ = function(id){ return document.getElementById(id); };
+
+  var params = { seed: 1, N:320, speed:1.0, radius:12, beta:1.6, lat:3, inf:8, vac:0, dist:0, qfrac:0, qdelay:2 };
+  var sim = null, running = true, mult = 2, seedCounter = 1;
+
+  var sliders = ['N','speed','radius','beta','lat','inf','vac','dist','qfrac','qdelay'];
+  var fmt = { speed:function(v){return v.toFixed(1);}, beta:function(v){return v.toFixed(1);} };
+  var structural = { N:true, vac:true };  // changing these rebuilds the run
+
+  function rebuild(){
+    params.seed = (seedCounter = (seedCounter + 1) >>> 0);
+    sim = Core.createSim(Object.assign({}, params));
+    $('over-badge').classList.remove('show');
+  }
+
+  function readSlider(id){
+    var el = $(id), v = parseFloat(el.value);
+    params[id] = v;
+    $(id + '-out').textContent = fmt[id] ? fmt[id](v) : v;
+  }
+
+  sliders.forEach(function(id){
+    var el = $(id);
+    readSlider(id);
+    el.addEventListener('input', function(){
+      readSlider(id);
+      if(id === 'qfrac'){
+        var on = params.qfrac > 0;
+        $('ctrl-qdelay').classList.toggle('disabled', !on);
+        $('qdelay').disabled = !on;
+      }
+      if(structural[id]) rebuild();   // others apply live
+    });
+  });
+  $('qdelay').disabled = true;
+
+  $('btn-play').addEventListener('click', function(){
+    running = !running;
+    this.textContent = running ? 'Pause' : 'Weiter';
+    this.classList.toggle('paused', !running);
+  });
+  $('btn-reset').addEventListener('click', function(){ rebuild(); running = true; var b=$('btn-play'); b.textContent='Pause'; b.classList.remove('paused'); });
+
+  $('seg-speed').addEventListener('click', function(e){
+    var b = e.target.closest('button'); if(!b) return;
+    mult = parseInt(b.getAttribute('data-mult'), 10);
+    Array.prototype.forEach.call(this.querySelectorAll('button'), function(x){ x.classList.toggle('active', x === b); });
+  });
+
+  // ---- canvas helpers (devicePixelRatio aware) ----
+  function fitCanvas(cv){
+    var r = cv.getBoundingClientRect();
+    var dpr = Math.min(window.devicePixelRatio || 1, 2);
+    var w = Math.max(1, Math.round(r.width * dpr)), h = Math.max(1, Math.round(r.height * dpr));
+    if(cv.width !== w || cv.height !== h){ cv.width = w; cv.height = h; }
+    return dpr;
+  }
+
+  function drawArena(){
+    var cv = $('arena'), ctx = cv.getContext('2d');
+    fitCanvas(cv);
+    var W = cv.width, H = cv.height;
+    var sx = W / sim.W, sy = H / sim.H;
+    ctx.clearRect(0, 0, W, H);
+    ctx.fillStyle = '#0E1622'; ctx.fillRect(0, 0, W, H);
+    // new-infection flashes
+    var i, f, a;
+    for(i = 0; i < sim.flashes.length; i++){
+      f = sim.flashes[i];
+      var prog = f.t / 0.6;
+      ctx.beginPath();
+      ctx.arc(f.x * sx, f.y * sy, (3 + prog * 16) * sx, 0, Math.PI * 2);
+      ctx.strokeStyle = 'rgba(198,40,40,' + (0.5 * (1 - prog)) + ')';
+      ctx.lineWidth = 1.5; ctx.stroke();
+    }
+    // agents
+    var rad = Math.max(2, 3.0 * sx);
+    var ag = sim.agents;
+    for(i = 0; i < ag.length; i++){
+      a = ag[i];
+      ctx.beginPath();
+      ctx.arc(a.x * sx, a.y * sy, a.state === 'I' ? rad * 1.35 : rad, 0, Math.PI * 2);
+      ctx.fillStyle = COL[a.state];
+      ctx.fill();
+      if(a.q){ ctx.lineWidth = 1.5 * sx; ctx.strokeStyle = '#fff'; ctx.stroke(); }
+    }
+  }
+
+  function niceMax(v){ // round day axis up to a friendly value
+    if(v <= 10) return 10;
+    var pow = Math.pow(10, Math.floor(Math.log10(v)));
+    var n = v / pow;
+    var step = n <= 1 ? 1 : n <= 2 ? 2 : n <= 5 ? 5 : 10;
+    return step * pow;
+  }
+
+  function drawChart(){
+    var cv = $('chart'), ctx = cv.getContext('2d');
+    var dpr = fitCanvas(cv);
+    var W = cv.width, H = cv.height;
+    ctx.clearRect(0, 0, W, H);
+    var padL = 42 * dpr, padR = 12 * dpr, padT = 12 * dpr, padB = 28 * dpr;
+    var plotW = W - padL - padR, plotH = H - padT - padB;
+    var s = sim.series, n = s.t.length;
+    var maxT = niceMax(Math.max(10, sim.day));
+    var X = function(t){ return padL + (t / maxT) * plotW; };
+    var Y = function(p){ return padT + (1 - p / 100) * plotH; };
+
+    // gridlines + y labels (0..100%)
+    ctx.font = (11 * dpr) + 'px "IBM Plex Mono", monospace';
+    ctx.fillStyle = '#9AA3AF'; ctx.strokeStyle = '#E4E7ED';
+    ctx.lineWidth = 1; ctx.textBaseline = 'middle';
+    var g;
+    for(g = 0; g <= 100; g += 25){
+      var yy = Y(g);
+      ctx.globalAlpha = 0.5; ctx.beginPath(); ctx.moveTo(padL, yy); ctx.lineTo(W - padR, yy); ctx.stroke(); ctx.globalAlpha = 1;
+      ctx.textAlign = 'right'; ctx.fillText(g + '%', padL - 6 * dpr, yy);
+    }
+    // x ticks
+    ctx.textAlign = 'center'; ctx.textBaseline = 'top';
+    var tk;
+    for(tk = 0; tk <= 4; tk++){
+      var tday = maxT * tk / 4, xx = X(tday);
+      ctx.fillText(Math.round(tday), xx, H - padB + 6 * dpr);
+    }
+    ctx.fillStyle = '#5C6675'; ctx.textAlign = 'right'; ctx.textBaseline = 'bottom';
+    ctx.fillText('Tage', W - padR, H - 2 * dpr);
+
+    if(n < 2){ return; }
+    // stacked areas bottom->top: S, E, I, R (sum = 100)
+    var order = ['S','E','I','R'];
+    var base = new Array(n); for(var b = 0; b < n; b++) base[b] = 0;
+    order.forEach(function(key){
+      var top = new Array(n), j;
+      for(j = 0; j < n; j++) top[j] = base[j] + s[key][j];
+      ctx.beginPath();
+      ctx.moveTo(X(s.t[0]), Y(base[0]));
+      for(j = 0; j < n; j++) ctx.lineTo(X(s.t[j]), Y(top[j]));
+      for(j = n - 1; j >= 0; j--) ctx.lineTo(X(s.t[j]), Y(base[j]));
+      ctx.closePath();
+      ctx.fillStyle = COL[key];
+      ctx.globalAlpha = key === 'S' ? 0.30 : (key === 'R' ? 0.32 : 0.82);
+      ctx.fill(); ctx.globalAlpha = 1;
+      base = top;
+    });
+    // emphasise the infectious band with a crisp line on top of I
+    var cum = new Array(n), j2;
+    for(j2 = 0; j2 < n; j2++) cum[j2] = s.S[j2] + s.E[j2] + s.I[j2];
+    ctx.beginPath(); ctx.moveTo(X(s.t[0]), Y(cum[0]));
+    for(j2 = 0; j2 < n; j2++) ctx.lineTo(X(s.t[j2]), Y(cum[j2]));
+    ctx.strokeStyle = COL.I; ctx.lineWidth = 1.6 * dpr; ctx.stroke();
+  }
+
+  function updateMetrics(){
+    var c = Core.counts(sim), N = sim.agents.length;
+    $('m-day').textContent = Math.floor(sim.day);
+    $('m-inf').innerHTML = c.I + ' <small>(' + (100*c.I/N).toFixed(0) + '%)</small>';
+    $('m-attack').textContent = (100 * sim.cum / N).toFixed(0) + '%';
+    var rt = Core.rtMeasured(sim);
+    $('m-rt').textContent = rt == null ? '–' : rt.toFixed(2);
+    $('over-badge').classList.toggle('show', sim.over);
+  }
+
+  var lastT = 0;
+  function frame(){
+    if(running && sim){
+      var steps = mult;
+      for(var k = 0; k < steps; k++){ if(!sim.over) Core.stepSim(sim); }
+    }
+    if(sim){ drawArena(); drawChart(); updateMetrics(); }
+    requestAnimationFrame(frame);
+  }
+
+  // expose for headless wiring tests
+  (typeof window !== 'undefined' ? window : globalThis).__ABM_DEBUG = {
+    getSim: function(){ return sim; }, getParams: function(){ return params; },
+    setRunning: function(v){ running = v; }
+  };
+
+  rebuild();
+  requestAnimationFrame(frame);
+})();
+</script>
+</body>
+</html>
